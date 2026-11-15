@@ -1,0 +1,74 @@
+{
+  "settings": {
+    "businessName": "Importadora",
+    "slogan": "Productos importados al mejor precio, directo a tu puerta",
+    "whatsapp": "51924895094",
+    "facebook": "https://www.facebook.com/share/18bpm58zC2/?mibextid=wwXIfr",
+    "currency": "S/",
+    "announcement": "Envíos a todo el Perú · Precios por mayor y menor",
+    "about": "Somos una importadora peruana. Traemos productos de calidad y los vendemos por mayor y menor con los mejores precios del mercado.",
+    "logo": ""
+  },
+  "products": [
+    {
+      "id": "p1",
+      "name": "Audífonos inalámbricos Bluetooth",
+      "category": "Tecnología",
+      "type": "producto",
+      "price": 59.9,
+      "oldPrice": 89.9,
+      "image": "",
+      "description": "Producto de ejemplo. Edítalo o elimínalo desde el panel.",
+      "includes": [],
+      "active": true
+    },
+    {
+      "id": "p2",
+      "name": "Reloj inteligente deportivo",
+      "category": "Tecnología",
+      "type": "producto",
+      "price": 79.9,
+      "oldPrice": 0,
+      "image": "",
+      "description": "Producto de ejemplo. Edítalo o elimínalo desde el panel.",
+      "includes": [],
+      "active": true
+    },
+    {
+      "id": "p3",
+      "name": "Organizador multiuso para cocina",
+      "category": "Hogar",
+      "type": "producto",
+      "price": 25,
+      "oldPrice": 35,
+      "image": "",
+      "description": "Producto de ejemplo. Edítalo o elimínalo desde el panel.",
+      "includes": [],
+      "active": true
+    },
+    {
+      "id": "k1",
+      "name": "Pack Emprendedor x10",
+      "category": "Packs",
+      "type": "pack",
+      "price": 450,
+      "oldPrice": 599,
+      "image": "",
+      "description": "Pack de ejemplo para reventa. Edítalo desde el panel.",
+      "includes": ["5 audífonos Bluetooth", "5 relojes inteligentes"],
+      "active": true
+    },
+    {
+      "id": "k2",
+      "name": "Pack Hogar",
+      "category": "Packs",
+      "type": "pack",
+      "price": 69.9,
+      "oldPrice": 99.9,
+      "image": "",
+      "description": "Pack de ejemplo. Edítalo desde el panel.",
+      "includes": ["3 organizadores de cocina", "1 set de recipientes"],
+      "active": true
+    }
+  ]
+}
