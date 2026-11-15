@@ -11,11 +11,9 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
 };
 
-function placeholder(name) {
-  const hue = [...name].reduce((a, c) => a + c.charCodeAt(0), 0) % 360;
-  const ini = name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-  return `<div class="ph" style="background:linear-gradient(135deg,hsl(${hue} 60% 45%),hsl(${(hue + 40) % 360} 70% 55%))">${esc(ini)}</div>`;
-}
+const BOX = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>`;
+const PLUS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
+function placeholder() { return `<div class="ph">${BOX}</div>`; }
 const imgHtml = (p) => (p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">` : placeholder(p.name));
 const discount = (p) => (p.oldPrice > p.price ? Math.round((1 - p.price / p.oldPrice) * 100) : 0);
 
@@ -30,8 +28,10 @@ function cardHtml(p) {
       <h3>${esc(p.name)}</h3>
       ${p.description ? `<p class="desc">${esc(p.description)}</p>` : ""}
       ${p.includes?.length ? `<ul>${p.includes.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : ""}
-      <div class="price"><span class="now">${money(p.price)}</span>${d ? `<span class="old">${money(p.oldPrice)}</span>` : ""}</div>
-      <button class="btn btn-primary add" data-add="${esc(p.id)}">Agregar</button>
+      <div class="card-foot">
+        <div class="price"><span class="now">${money(p.price)}</span>${d ? `<span class="old">${money(p.oldPrice)}</span>` : ""}</div>
+        <button class="add" data-add="${esc(p.id)}" aria-label="Agregar ${esc(p.name)} al carrito">${PLUS}</button>
+      </div>
     </div>
   </article>`;
 }
@@ -66,6 +66,7 @@ function render() {
   const q = $("#search").value.trim().toLowerCase();
   const list = active.filter((p) => (filter === "Todos" || p.category === filter) && (!q || `${p.name} ${p.description} ${p.category}`.toLowerCase().includes(q)));
   renderGrid($("#gridAll"), list, "No se encontraron productos.");
+  $("#catCount").textContent = `${list.length} producto${list.length === 1 ? "" : "s"}`;
   renderCart();
 }
 
@@ -89,31 +90,42 @@ function renderCart() {
       <div class="qty"><button data-dec="${esc(p.id)}">−</button><span>${i.qty}</span><button data-inc="${esc(p.id)}">+</button></div>
     </div>`;
   }).join("") : `<p class="empty">Tu carrito está vacío.</p>`;
-  $("#cartTotal").textContent = money(cart.reduce((a, i) => a + findP(i.id).price * i.qty, 0));
+  const total = money(cart.reduce((a, i) => a + findP(i.id).price * i.qty, 0));
+  $("#cartTotal").textContent = total;
+  $("#cbCount").textContent = count; $("#cbTotal").textContent = total;
+  $("#cartbar").classList.toggle("on", count > 0 && !$("#drawer").classList.contains("on"));
+  document.body.classList.toggle("has-cart", count > 0);
+  updateWaLink();
 }
-function openCart(on) { $("#drawer").classList.toggle("on", on); $("#overlay").classList.toggle("on", on); }
+function openCart(on) { $("#drawer").classList.toggle("on", on); $("#overlay").classList.toggle("on", on); renderCart(); }
 
-function sendWhatsApp() {
-  if (!cart.length) return toast("Agrega productos primero");
+function orderMessage() {
   const s = DATA.settings;
   const name = $("#cName").value.trim();
   const place = $("#cPlace").value.trim();
-  if (!name) { $("#cName").focus(); return toast("Escribe tu nombre"); }
-  store.set("customer", { name, place });
+  const note = $("#cNote").value.trim();
   let total = 0;
   const lines = cart.map((i) => {
     const p = findP(i.id); const sub = p.price * i.qty; total += sub;
     return `• ${i.qty} x ${p.name}${p.type === "pack" ? " (Pack)" : ""} — ${money(sub)}`;
   });
-  const msg = [
+  return [
     `Hola ${s.businessName}, quiero hacer este pedido:`, "", ...lines, "",
     `*Total: ${money(total)}*`, "",
-    `Nombre: ${name}`,
+    name ? `Nombre: ${name}` : null,
     place ? `Distrito/Ciudad: ${place}` : null,
     `Entrega: ${$("#cDelivery").value}`,
-    $("#cNote").value.trim() ? `Comentario: ${$("#cNote").value.trim()}` : null,
+    note ? `Comentario: ${note}` : null,
   ].filter((l) => l !== null).join("\n");
-  window.open(`https://wa.me/${s.whatsapp}?text=${encodeURIComponent(msg)}`, "_blank");
+}
+function updateWaLink() {
+  if (!DATA.settings.whatsapp) return;
+  $("#sendWa").href = `https://wa.me/${DATA.settings.whatsapp}?text=${encodeURIComponent(orderMessage())}`;
+}
+function onSendWa(e) {
+  if (!cart.length) { e.preventDefault(); return toast("Agrega productos primero"); }
+  if (!$("#cName").value.trim()) { e.preventDefault(); $("#cName").focus(); return toast("Escribe tu nombre"); }
+  store.set("customer", { name: $("#cName").value.trim(), place: $("#cPlace").value.trim() });
 }
 
 let tt;
@@ -131,7 +143,10 @@ document.addEventListener("click", (e) => {
 $("#search").addEventListener("input", render);
 $("#openCart").onclick = () => openCart(true);
 $("#closeCart").onclick = $("#overlay").onclick = () => openCart(false);
-$("#sendWa").onclick = sendWhatsApp;
+$("#sendWa").addEventListener("click", onSendWa);
+$("#cartbarBtn").onclick = () => openCart(true);
+$("#checkout").addEventListener("input", updateWaLink);
+$("#checkout").addEventListener("submit", (e) => e.preventDefault());
 $("#clearCart").onclick = () => { cart = []; saveCart(); renderCart(); };
 
 (async function init() {
